@@ -34,12 +34,12 @@ jobs:
 
     steps:
       - name: Checkout MODFLOW6 examples repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: 3.8
 
       - name: Print python version
         run: |
@@ -89,6 +89,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+        python: [3.8, 3.9, "3.10", "3.11"]
     env:
       script-directory: scripts
       etc-directory: etc
@@ -98,7 +100,7 @@ jobs:
 
     steps:
       - name: Checkout MODFLOW6 examples repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install TeX Live and additional TrueType fonts
         run: |
@@ -106,7 +108,7 @@ jobs:
           sudo apt install texlive-latex-extra texlive-science fonts-liberation
 
       - name: Checkout usgslatex
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: MODFLOW-USGS/usgslatex
           path: usgslatex
@@ -118,7 +120,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: ${{ matrix.python }}
 
       - name: Install Python packages
         run: |
@@ -147,11 +149,13 @@ jobs:
         working-directory: ${{env.etc-directory}}
 
       - name: Run processing script
+        if: matrix.python == '3.9'
         run: |
           python process-scripts.py
         working-directory: ${{env.script-directory}}
 
       - name: Build mf6examples LaTeX document
+        if: matrix.python == '3.9'
         shell: python
         run: |
           import sys
@@ -182,12 +186,14 @@ jobs:
                       print(stderr)
 
       - name: Rename and move the LaTeX document
+        if: matrix.python == '3.9'
         run: |
           ls -l ./doc/
           mv ./doc/mf6examples.pdf mf6examples.pdf
           ls -l ./
 
       - name: Upload build artifacts for current release
+        if: matrix.python == '3.9'
         uses: actions/upload-artifact@v3
         with:
           name: current
@@ -203,7 +209,7 @@ jobs:
 
     steps:
       - name: Checkout MODFLOW6 examples repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Get Current Time
         uses: josStorer/get-current-time@v2

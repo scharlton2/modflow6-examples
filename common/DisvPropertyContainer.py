@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 from itertools import cycle
 
@@ -540,7 +542,7 @@ class DisvPropertyContainer:
             plot_time = -1.0
 
         if not isinstance(grid_color, tuple):
-            grid_color = (grid_color, )
+            grid_color = (grid_color,)
 
         ColorCycler = grid_color
         if plot_time > 0.0 and grid_color == ("grey",):
