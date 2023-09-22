@@ -7,7 +7,7 @@ import numpy as np
 
 class USGSFigure:
     def __init__(
-        self, figure_type="map", family="Arial Narrow", font_path=None, verbose=False
+        self, figure_type="map", family="Arial", font_path=None, verbose=False
     ):
         """Create a USGSFigure object
 
@@ -16,7 +16,7 @@ class USGSFigure:
         figure_type : str
             figure type ("map", "graph")
         family : str
-            font family name (default is Arial Narrow)
+            font family name (default is Arial)
         verbose : bool
             boolean that define if debug information should be written
         """
@@ -42,13 +42,13 @@ class USGSFigure:
         """
         self.figure_type = self._validate_figure_type(figure_type)
 
-    def set_font_family(self, family="Arial Narrow", font_path=None):
+    def set_font_family(self, family="Arial", font_path=None):
         """Set font family
 
         Parameters
         ----------
         family : str
-            font family (default is Arial Narrow)
+            font family (default is Arial)
         font_path : str
             path to fonts not available to matplotlib (not implemented)
 
@@ -563,13 +563,13 @@ class USGSFigure:
         return fontspec
 
     def _set_fontfamily(self, family):
-        """Set font family to Liberation Sans Narrow on linux if default Arial Narrow
+        """Set font family to Liberation Sans Narrow on linux if default Arial
         is being used
 
         Parameters
         ----------
         family : str
-            font family name (default is Arial Narrow)
+            font family name (default is Arial)
 
         Returns
         -------
@@ -578,6 +578,6 @@ class USGSFigure:
 
         """
         if sys.platform.lower() in ("linux",):
-            if family == "Arial Narrow":
+            if family == "Arial":
                 family = "Liberation Sans Narrow"
         return family
