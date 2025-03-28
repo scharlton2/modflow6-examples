@@ -9,52 +9,67 @@
 
 # Imports
 
+# +
+import shutil
+import sys
+from pathlib import Path
+
+import flopy
+import git
+import matplotlib.pyplot as plt
+import modflowapi
+import numpy as np
+import pooch
+from flopy.plot.styles import styles
+from modflow_devtools.misc import get_env, timed
+
+
 import os
 import sys
 
-import flopy
-import matplotlib.pyplot as plt
-import numpy as np
 
 import modflowapi
 from modflowapi import Callbacks
-from pathlib import Path
 
 import phreeqcrm
-##from phreeqcrm import BMIPhreeqcRM
-##import phreeqcrm as rm
-##import phreeqcrm as phrqcrm
 import phreeqpy.iphreeqc.phreeqc_dll as phreeqc_mod
 import shutil
 
-# Append to system path to include the common subdirectory
+sim_name = "ex-gwt-phreeqc"
+try:
+    root = Path(git.Repo(".", search_parent_directories=True).working_dir)
+except:
+    root = None
+workspace = root / "examples" if root else Path.cwd()
+figs_path = root / "figures" if root else Path.cwd()
+data_path = root / "data" / sim_name if root else Path.cwd()
 
-sys.path.append(os.path.join("..", "common"))
+# Settings from environment variables
+write = get_env("WRITE", True)
+run = get_env("RUN", True)
+plot = get_env("PLOT", True)
+plot_show = get_env("PLOT_SHOW", True)
+plot_save = get_env("PLOT_SAVE", True)
+# -
 
-# Import common functionality
 
-import analytical
-import config
-from figspecs import USGSFigure
+# # Import common functionality
+
+# import analytical
+# import config
+# from figspecs import USGSFigure
 
 # Set figure properties specific to this problem
 
 # +
 figure_size = (5, 3)
-#figure_size = None
-#{
-notebook_directory = sys.path[0]    
-print(notebook_directory)
-
-cwd = os.getcwd()
-print(cwd)
-#}
 # -
 
 # Base simulation and model name and workspace
 
-ws = config.base_ws
-example_name = "moc"
+#ws = config.base_ws
+ws = root
+## example_name = "moc"
 
 from contextlib import contextmanager
 @contextmanager
@@ -78,7 +93,7 @@ def change_directory(new_dir):
 # Scenario parameters - make sure there is at least one blank line before next item
 
 parameters = {
-    "ex11-bmi-mmols-single_dlp": {
+    "ex-gwt-phreeqc": {
         "longitudinal_dispersivity": 0.002,
     },
 }
@@ -118,24 +133,30 @@ concentration_factor = 1000.  # Scale factor ($millmoles/mole$)
 def setup_phreeqcrm(sim_folder):
     
     ##os.chdir(sys.path[0])
-    notebook_path = os.path.abspath("ex11-bmi-mmols-single_dlp.ipynb")
+    #notebook_path = os.path.abspath("ex11-bmi-mmols-single_dlp.ipynb")
 
-    notebook_directory = os.path.dirname(notebook_path)
-    assert(os.getcwd() == notebook_directory)
+    #notebook_directory = os.path.dirname(notebook_path)
+    #assert(os.getcwd() == notebook_directory)
 
-    assert(sim_folder == "ex11-bmi-mmols-single_dlp")
+    #assert(sim_folder == "ex11-bmi-mmols-single_dlp")
     
     # get abspath before change_directory
-    sim_ws = os.path.abspath(os.path.join(ws, sim_folder, "phreeqcrm"))
+    #sim_ws = os.path.abspath(os.path.join(ws, sim_folder, "phreeqcrm"))
+    #sim_ws = os.path.abspath(os.path.join(workspace, sim_folder, "phreeqcrm"))
+    sim_ws = workspace / sim_folder / "phreeqcrm"
 
     with change_directory(sim_ws):
         
         # copy phreeqc.dat to sim_ws
-        source_file = os.path.join(notebook_directory, 'phreeqc.dat')
+        #source_file = os.path.join(notebook_directory, 'phreeqc.dat')
+        #source_file = os.path.join(data_path, 'phreeqc.dat')
+        source_file = data_path / 'phreeqc.dat'
         shutil.copy(source_file, sim_ws)
 
         # copy advect.pqi to sim_ws
-        source_file = os.path.join(notebook_directory, 'advect.pqi')
+        #source_file = os.path.join(notebook_directory, 'advect.pqi')
+        #source_file = os.path.join(data_path, 'advect.pqi')
+        source_file = data_path / 'advect.pqi'
         shutil.copy(source_file, sim_ws)
     
         # Create YAMLPhreeqcRM document
@@ -217,12 +238,16 @@ def setup_phreeqcrm(sim_folder):
 
 
 def build_phreeqcrm(sim_folder):
+    print(f"sim_folder={sim_folder}")
+
     yaml = setup_phreeqcrm(sim_folder)
     
     rm = None
     try:
         # get abspath before change_directory
-        sim_ws = os.path.abspath(os.path.join(ws, sim_folder, "phreeqcrm"))
+        # sim_ws = os.path.abspath(os.path.join(workspace, sim_folder, "phreeqcrm"))
+        sim_ws = workspace / sim_folder / "phreeqcrm"
+        print(f"sim_ws={sim_ws}")
         
         rm = phreeqcrm.BMIPhreeqcRM()
         with change_directory(sim_ws):
@@ -232,7 +257,7 @@ def build_phreeqcrm(sim_folder):
         ncomps     = rm.get_value_ptr("ComponentCount")[0]
 
         nxyz = nlay*nrow*ncol
-        assert nxyz == rm.get_value_ptr("GridCellCount")[0]        
+        assert nxyz == rm.get_value_ptr("GridCellCount")[0]
         
         # Get initial concentrations
         rm.initial_solution = rm.get_value_ptr("Concentrations")[::nxyz]
@@ -258,7 +283,8 @@ def build_phreeqcrm(sim_folder):
 
 def build_mf6gwfgwt(sim_folder, solutes, influent_concentration, initial_solution, longitudinal_dispersivity):
     name = "flow"
-    sim_ws = os.path.join(ws, sim_folder, "mf6gwfgwt")
+    # sim_ws = os.path.join(ws, sim_folder, "mf6gwfgwt")
+    sim_ws = ws / sim_folder / "mf6gwfgwt"
     sim = flopy.mf6.MFSimulation(
         sim_name=name, sim_ws=sim_ws, exe_name="mf6"
     )
@@ -416,7 +442,7 @@ def build_mf6gwfgwt(sim_folder, solutes, influent_concentration, initial_solutio
         
         flopy.mf6.ModflowGwfgwt(
             sim, exgtype="GWF6-GWT6", exgmnamea=gwf.name, exgmnameb=gwt.name, filename=f"{gwf.name}-{gwt.name}.gwfgwt"
-        )        
+        )
 
     return sim
 
@@ -425,11 +451,12 @@ def build_mf6gwfgwt(sim_folder, solutes, influent_concentration, initial_solutio
 
 def build_model(sim_name, longitudinal_dispersivity):
     sims = None
-    if config.buildModel:
+    #if config.buildModel:
+    if build_model:
         # build_phreeqcrm
         sim_phreeqcrm = build_phreeqcrm(sim_name)
         
-        solutes                = sim_phreeqcrm.solutes        
+        solutes                = sim_phreeqcrm.solutes
         initial_solution       = sim_phreeqcrm.initial_solution
         influent_concentration = sim_phreeqcrm.influent_concentration
         
@@ -442,7 +469,8 @@ def build_model(sim_name, longitudinal_dispersivity):
 
 
 def write_model(sims, silent=True):
-    if config.writeModel:
+    #if config.writeModel:
+    if write:
         _, sim_mf6gwf = sims
         sim_mf6gwf.write_simulation(silent=silent)
     return
@@ -452,11 +480,13 @@ def write_model(sims, silent=True):
 # True is returned if the model runs successfully
 
 
-@config.timeit
+#@config.timeit
+@timed
 def run_model(sims, silent=True):
     
     success = True
-    if config.runModel:
+    #if config.runModel:
+    if run:
         phreeqcrm, sim_mf6gwf = sims
         concs = phreeqcrm.get_value_ptr("Concentrations")
         ip = phreeqc_mod.IPhreeqc()
@@ -587,12 +617,15 @@ def get_selected_output(phreeqc):
     return conc
 
 
-def run_ex11():
-    ip = phreeqc_mod.IPhreeqc()
-    ip.load_database("phreeqc.dat")
-    script = make_script()
-    ip.run_string(script)
-    conc = get_selected_output(ip)
+def run_ex11(sim_folder):
+    #sim_ws = os.path.abspath(os.path.join(workspace, sim_folder, "phreeqcrm"))
+    sim_ws = workspace / sim_folder / "phreeqcrm"
+    with change_directory(sim_ws):
+        ip = phreeqc_mod.IPhreeqc()
+        ip.load_database("phreeqc.dat")
+        script = make_script()
+        ip.run_string(script)
+        conc = get_selected_output(ip)
     return conc
 
 # Function to plot the model results
@@ -601,14 +634,15 @@ def run_ex11():
 def plot_results_ct(
     sims, idx, solutes_idx, solutes, conc, longitudinal_dispersivity
 ):
-    if config.plotModel:
+    #if config.plotModel:
+    if plot:
         _, sim_mf6gwf = sims
-        fs = USGSFigure(figure_type="graph", verbose=False)
-
-        sim_ws = sim_mf6gwf.simulation_data.mfpath.get_sim_path()
+        #sim_ws = sim_mf6gwf.simulation_data.mfpath.get_sim_path()
         
         mf6gwt_ra = sim_mf6gwf.get_model(f"trans.{solutes[solutes_idx]}").obs.output.obs().data
         fig, axs = plt.subplots(1, 1, figsize=figure_size, dpi=300, tight_layout=True)
+        # fig, axs = plt.subplots(5, 1, figsize=figure_size, dpi=300, tight_layout=True)
+        # print(f"len(axs)={len(axs)}")
         iskip = 4
         
         obsnames = ["CELL39"]
@@ -658,16 +692,14 @@ def plot_results_ct(
                 label="Analytical",
             )              
         axs.set_xlabel("Pore volumes")
-        axs.set_ylabel(f"{solutes[solutes_idx]} Concentration (mmol/kgw)")            
+        axs.set_ylabel(f"{solutes[solutes_idx]} Concentration (mmol/kgw)")
         axs.legend()
 
         # save figure
-        if config.plotSave:
-            sim_folder = os.path.split(sim_ws)[0]
-            sim_folder = os.path.basename(sim_folder)
-            fname = f"{sim_folder}-ct{config.figure_ext}"
-            fpth = os.path.join(ws, "..", "figures", fname)
-            fig.savefig(fpth)
+        if plot_save:
+            figs_path.mkdir(exist_ok=True, parents=True)
+            fpth = figs_path / f"{sim_name}.png"
+            fig.savefig(fpth, dpi=600)
 
 # Function that wraps all of the steps for each scenario
 #
@@ -690,7 +722,8 @@ def scenario(idx, silent=True):
     if success:
         phreeqcrm, sim_mf6gwf = sims
         solutes = phreeqcrm.solutes
-        conc =  run_ex11()
+
+        conc =  run_ex11(sim_name)
         for sidx, solute in enumerate(solutes):
             if sidx > 2:
                 plot_results_ct(sims, idx, sidx, solutes, conc, **parameter_dict)
