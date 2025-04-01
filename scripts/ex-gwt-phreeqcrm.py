@@ -44,14 +44,14 @@ try:
     root = Path(git.Repo(".", search_parent_directories=True).working_dir)
 except:
     root = None
-workspace = root / "examples"        if root else Path.cwd()
-figs_path = root / "figures"         if root else Path.cwd()
+workspace = root / "examples" if root else Path.cwd()
+figs_path = root / "figures" if root else Path.cwd()
 data_path = root / "data" / sim_name if root else Path.cwd()
 
 # Settings from environment variables
-write     = get_env("WRITE", True)
-run       = get_env("RUN", True)
-plot      = get_env("PLOT", True)
+write = get_env("WRITE", True)
+run = get_env("RUN", True)
+plot = get_env("PLOT", True)
 plot_show = get_env("PLOT_SHOW", True)
 plot_save = get_env("PLOT_SAVE", True)
 # -
@@ -71,11 +71,10 @@ figure_size = (5, 3)
 
 # Base simulation and model name and workspace
 
-#ws = config.base_ws
+# ws = config.base_ws
 ##ws = root
 ws = workspace
 ## example_name = "moc"
-
 
 
 @contextmanager
@@ -84,7 +83,7 @@ def change_directory(new_dir):
 
     # Convert relative path to an absolute path
     new_dir = os.path.abspath(new_dir)
-    
+
     # Check if the directory exists; if not, create it
     if not os.path.exists(new_dir):
         os.makedirs(new_dir)
@@ -113,28 +112,29 @@ parameter_units = {
 
 # Model units
 
-length_units = "METERS"    # m
-time_units = "seconds"     # s
+length_units = "METERS"  # m
+time_units = "seconds"  # s
 
 # Table of model parameters
 
-nper = 1                      # Number of periods
-nlay = 1                      # Number of layers
-nrow = 1                      # Number of rows
-ncol = 40                     # Number of columns
-system_length = .08           # Length of system ($m$)
-delr = 0.002                  # Column width ($m$)
-delc = 1.0                    # Row width ($m$)
-top = 1.0                     # Top of the model ($m$)
-botm = 0                      # Layer bottom elevation ($m$)
+nper = 1  # Number of periods
+nlay = 1  # Number of layers
+nrow = 1  # Number of rows
+ncol = 40  # Number of columns
+system_length = 0.08  # Length of system ($m$)
+delr = 0.002  # Column width ($m$)
+delc = 1.0  # Row width ($m$)
+top = 1.0  # Top of the model ($m$)
+botm = 0  # Layer bottom elevation ($m$)
 hydraulic_conductivity = 1.0  # Hydraulic conductivity ($m s^{-1}$)
-porosity = 0.2                # Porosity of mobile domain (unitless)
-specific_discharge = 1./720.*porosity  # Specific discharge ($m s^{-1}$)
-total_time = 72000.0          # Simulation time ($s$)
-concentration_factor = 1000.  # Scale factor ($millmoles/mole$)
+porosity = 0.2  # Porosity of mobile domain (unitless)
+specific_discharge = 1.0 / 720.0 * porosity  # Specific discharge ($m s^{-1}$)
+total_time = 72000.0  # Simulation time ($s$)
+concentration_factor = 1000.0  # Scale factor ($millmoles/mole$)
 
 
 # Create yaml for phreeqcrm initialize()
+
 
 def setup_phreeqcrm(sim_folder):
     # @todo update workspace var
@@ -146,7 +146,7 @@ def setup_phreeqcrm(sim_folder):
         url=f"https://github.com/scharlton2/modflow6-examples/raw/refs/heads/phreeqcrm-example/data/{sim_name}/{fname}",
         fname=fname,
         path=data_path,
-        known_hash="c0252be127cc8843fddbd41a5dcda5bb3e4ad3df8fce06fdbc1a899bbe6c7c55"
+        known_hash="c0252be127cc8843fddbd41a5dcda5bb3e4ad3df8fce06fdbc1a899bbe6c7c55",
     )
 
     # get input file
@@ -155,24 +155,23 @@ def setup_phreeqcrm(sim_folder):
         url=f"https://github.com/scharlton2/modflow6-examples/raw/refs/heads/phreeqcrm-example/data/{sim_name}/{fname}",
         fname=fname,
         path=data_path,
-        known_hash="18da8325ca8ad0e13448e889a55652827a36057899d9167ffa020a1d9afcebe6"
+        known_hash="18da8325ca8ad0e13448e889a55652827a36057899d9167ffa020a1d9afcebe6",
     )
 
     with change_directory(sim_ws):
-        
         # copy phreeqc.dat to sim_ws
-        source_file = data_path / 'phreeqc.dat'
+        source_file = data_path / "phreeqc.dat"
         shutil.copy(source_file, sim_ws)
 
         # copy advect.pqi to sim_ws
-        source_file = data_path / 'advect.pqi'
+        source_file = data_path / "advect.pqi"
         shutil.copy(source_file, sim_ws)
-    
+
         # Create YAMLPhreeqcRM document
         yrm = phreeqcrm.YAMLPhreeqcRM()
 
         # Number of cells
-        nxyz = nlay*nrow*ncol
+        nxyz = nlay * nrow * ncol
 
         # Set GridCellCount
         yrm.YAMLSetGridCellCount(nxyz)
@@ -186,13 +185,13 @@ def setup_phreeqcrm(sim_folder):
         yrm.YAMLSetPartitionUZSolids(False)
 
         # Set concentration units
-        yrm.YAMLSetUnitsSolution(2)           # 1, mg/L; 2, mol/L; 3, kg/kgs
-        yrm.YAMLSetUnitsPPassemblage(1)       # 0, mol/L cell; 1, mol/L water; 2 mol/L rock
-        yrm.YAMLSetUnitsExchange(1)           # 0, mol/L cell; 1, mol/L water; 2 mol/L rock
-        yrm.YAMLSetUnitsSurface(1)            # 0, mol/L cell; 1, mol/L water; 2 mol/L rock
-        yrm.YAMLSetUnitsGasPhase(1)           # 0, mol/L cell; 1, mol/L water; 2 mol/L rock
-        yrm.YAMLSetUnitsSSassemblage(1)       # 0, mol/L cell; 1, mol/L water; 2 mol/L rock
-        yrm.YAMLSetUnitsKinetics(1)           # 0, mol/L cell; 1, mol/L water; 2 mol/L rock
+        yrm.YAMLSetUnitsSolution(2)  # 1, mg/L; 2, mol/L; 3, kg/kgs
+        yrm.YAMLSetUnitsPPassemblage(1)  # 0, mol/L cell; 1, mol/L water; 2 mol/L rock
+        yrm.YAMLSetUnitsExchange(1)  # 0, mol/L cell; 1, mol/L water; 2 mol/L rock
+        yrm.YAMLSetUnitsSurface(1)  # 0, mol/L cell; 1, mol/L water; 2 mol/L rock
+        yrm.YAMLSetUnitsGasPhase(1)  # 0, mol/L cell; 1, mol/L water; 2 mol/L rock
+        yrm.YAMLSetUnitsSSassemblage(1)  # 0, mol/L cell; 1, mol/L water; 2 mol/L rock
+        yrm.YAMLSetUnitsKinetics(1)  # 0, mol/L cell; 1, mol/L water; 2 mol/L rock
 
         # Set conversion from seconds to user units (days) Only affects one print statement
         time_conversion = 1.0 / 86400.0
@@ -218,9 +217,11 @@ def setup_phreeqcrm(sim_folder):
         yrm.YAMLLoadDatabase("phreeqc.dat")
 
         # Run file to define solutions and reactants for initial conditions, selected output
-        workers = True             # Worker instances do the reaction calculations for transport
-        initial_phreeqc = True     # InitialPhreeqc instance accumulates initial and boundary conditions
-        utility = True             # Utility instance is available for processing
+        workers = True  # Worker instances do the reaction calculations for transport
+        initial_phreeqc = (
+            True  # InitialPhreeqc instance accumulates initial and boundary conditions
+        )
+        utility = True  # Utility instance is available for processing
         yrm.YAMLRunFile(workers, initial_phreeqc, utility, "advect.pqi")
 
         # Clear contents of workers and utility
@@ -242,45 +243,44 @@ def setup_phreeqcrm(sim_folder):
 
         # Write YAML file
         yrm.WriteYAMLDoc("ex11-advect.yaml")
-        
+
     return "ex11-advect.yaml"
 
 
 def build_phreeqcrm(sim_folder):
-    
     ##print(f"sim_folder={sim_folder}")
     yaml = setup_phreeqcrm(sim_folder)
-    
+
     rm = None
     try:
-         
         sim_ws = workspace / sim_folder / "phreeqcrm"
-        
+
         rm = phreeqcrm.BMIPhreeqcRM()
         with change_directory(sim_ws):
             rm.initialize(yaml)
-            
-        rm.solutes = rm.get_value_ptr("Components")
-        ncomps     = rm.get_value_ptr("ComponentCount")[0]
 
-        nxyz = nlay*nrow*ncol
+        rm.solutes = rm.get_value_ptr("Components")
+        ncomps = rm.get_value_ptr("ComponentCount")[0]
+
+        nxyz = nlay * nrow * ncol
         assert nxyz == rm.get_value_ptr("GridCellCount")[0]
-        
+
         # Get initial concentrations
         rm.initial_solution = rm.get_value_ptr("Concentrations")[::nxyz]
         assert len(rm.initial_solution) == ncomps
 
         # Set boundary condition
-        bc1 = [0]           # solution 0 from Initial IPhreeqc instance
+        bc1 = [0]  # solution 0 from Initial IPhreeqc instance
         rm.influent_concentration = rm.InitialPhreeqc2Concentrations(bc1)
 
         # Convert to millimoles
-        rm.initial_solution       = rm.initial_solution * concentration_factor
+        rm.initial_solution = rm.initial_solution * concentration_factor
         rm.influent_concentration = rm.influent_concentration * concentration_factor
-            
+
     except:
         raise RuntimeError("build_phreeqcrm failed")
     return rm
+
 
 # ### Functions to build, write, run, and plot models
 #
@@ -288,18 +288,23 @@ def build_phreeqcrm(sim_folder):
 #
 
 
-def build_mf6gwfgwt(sim_folder, solutes, influent_concentration, initial_solution, longitudinal_dispersivity):
+def build_mf6gwfgwt(
+    sim_folder,
+    solutes,
+    influent_concentration,
+    initial_solution,
+    longitudinal_dispersivity,
+):
     name = "flow"
     # sim_ws = os.path.join(ws, sim_folder, "mf6gwfgwt")
     sim_ws = ws / sim_folder / "mf6gwfgwt"
-    sim = flopy.mf6.MFSimulation(
-        sim_name=name, sim_ws=sim_ws, exe_name="mf6"
-    )
-    tdis_ds = ((total_time, 400, 1.0),)    
+    sim = flopy.mf6.MFSimulation(sim_name=name, sim_ws=sim_ws, exe_name="mf6")
+    tdis_ds = ((total_time, 400, 1.0),)
     flopy.mf6.ModflowTdis(sim, nper=nper, perioddata=tdis_ds, time_units=time_units)
-    ims = flopy.mf6.ModflowIms(sim, filename=f"{name}.ims",
-        inner_dvclose=1e-9, outer_dvclose=1e-8)
-    
+    ims = flopy.mf6.ModflowIms(
+        sim, filename=f"{name}.ims", inner_dvclose=1e-9, outer_dvclose=1e-8
+    )
+
     gwf = flopy.mf6.ModflowGwf(sim, modelname=name, save_flows=True)
     sim.register_ims_package(ims, [gwf.name])
     flopy.mf6.ModflowGwfdis(
@@ -326,17 +331,14 @@ def build_mf6gwfgwt(sim_folder, solutes, influent_concentration, initial_solutio
         0: [
             [
                 (0, 0, 0),
-                specific_discharge * delc * delr,   # m^3/s
+                specific_discharge * delc * delr,  # m^3/s
                 *influent_concentration,
             ]
         ],
     }
-    
+
     flopy.mf6.ModflowGwfwel(
-        gwf,
-        stress_period_data=wel_spd,
-        pname="WEL-1",
-        auxiliary=solutes.tolist()
+        gwf, stress_period_data=wel_spd, pname="WEL-1", auxiliary=solutes.tolist()
     )
     head_filerecord = f"{name}.hds"
     budget_filerecord = f"{name}.bud"
@@ -363,11 +365,16 @@ def build_mf6gwfgwt(sim_folder, solutes, influent_concentration, initial_solutio
     for i, solute in enumerate(solutes):
         name = f"trans.{solute}"
         gwt = flopy.mf6.ModflowGwt(sim, modelname=name, save_flows=True)
-        
-        imsgwt = flopy.mf6.ModflowIms(sim, linear_acceleration="bicgstab", filename=f"{gwt.name}.ims",
-            inner_dvclose=1e-9, outer_dvclose=1e-8)
+
+        imsgwt = flopy.mf6.ModflowIms(
+            sim,
+            linear_acceleration="bicgstab",
+            filename=f"{gwt.name}.ims",
+            inner_dvclose=1e-9,
+            outer_dvclose=1e-8,
+        )
         sim.register_ims_package(imsgwt, [gwt.name])
-        
+
         flopy.mf6.ModflowGwtdis(
             gwt,
             length_units=length_units,
@@ -379,14 +386,14 @@ def build_mf6gwfgwt(sim_folder, solutes, influent_concentration, initial_solutio
             top=top,
             botm=botm,
         )
-        
+
         flopy.mf6.ModflowGwtic(gwt, strt=initial_solution[i], filename=f"{gwt.name}.ic")
-        
+
         flopy.mf6.ModflowGwtmst(
             gwt,
             porosity=porosity,
         )
-        
+
         flopy.mf6.ModflowGwtadv(gwt, scheme="TVD")
         flopy.mf6.ModflowGwtdsp(
             gwt,
@@ -395,7 +402,7 @@ def build_mf6gwfgwt(sim_folder, solutes, influent_concentration, initial_solutio
             alh=longitudinal_dispersivity,
             ath1=longitudinal_dispersivity,
         )
-        
+
         sourcerecarray = [["WEL-1", "AUX", solute]]
         flopy.mf6.ModflowGwtssm(gwt, sources=sourcerecarray)
         obs_data = {
@@ -414,28 +421,39 @@ def build_mf6gwfgwt(sim_folder, solutes, influent_concentration, initial_solutio
             saverecord=[("CONCENTRATION", "ALL"), ("BUDGET", "LAST")],
             printrecord=[("CONCENTRATION", "LAST"), ("BUDGET", "LAST")],
         )
-        
+
         flopy.mf6.ModflowGwfgwt(
-            sim, exgtype="GWF6-GWT6", exgmnamea=gwf.name, exgmnameb=gwt.name, filename=f"{gwf.name}-{gwt.name}.gwfgwt"
+            sim,
+            exgtype="GWF6-GWT6",
+            exgmnamea=gwf.name,
+            exgmnameb=gwt.name,
+            filename=f"{gwf.name}-{gwt.name}.gwfgwt",
         )
 
     return sim
+
 
 # MODFLOW 6 flopy GWF simulation object (sim) is returned
 
 
 def build_model(sim_name, longitudinal_dispersivity):
     sims = None
-    #if config.buildModel:
+    # if config.buildModel:
     if build_model:
         # build_phreeqcrm
         sim_phreeqcrm = build_phreeqcrm(sim_name)
-        
-        solutes                = sim_phreeqcrm.solutes
-        initial_solution       = sim_phreeqcrm.initial_solution
+
+        solutes = sim_phreeqcrm.solutes
+        initial_solution = sim_phreeqcrm.initial_solution
         influent_concentration = sim_phreeqcrm.influent_concentration
-        
-        sim_mf6gwf = build_mf6gwfgwt(sim_name, solutes, influent_concentration, initial_solution, longitudinal_dispersivity)
+
+        sim_mf6gwf = build_mf6gwfgwt(
+            sim_name,
+            solutes,
+            influent_concentration,
+            initial_solution,
+            longitudinal_dispersivity,
+        )
         sims = (sim_phreeqcrm, sim_mf6gwf)
     return sims
 
@@ -444,7 +462,7 @@ def build_model(sim_name, longitudinal_dispersivity):
 
 
 def write_model(sims, silent=True):
-    #if config.writeModel:
+    # if config.writeModel:
     if write:
         _, sim_mf6gwf = sims
         sim_mf6gwf.write_simulation(silent=silent)
@@ -455,37 +473,38 @@ def write_model(sims, silent=True):
 # True is returned if the model runs successfully
 
 
-#@config.timeit
+# @config.timeit
 @timed
 def run_model(sims, silent=True):
-    
     success = True
-    #if config.runModel:
+    # if config.runModel:
     if run:
         phreeqcrm, sim_mf6gwf = sims
         concs = phreeqcrm.get_value_ptr("Concentrations")
         ip = phreeqc_mod.IPhreeqc()
-        mf6api = modflowapi.ModflowApi(sim_mf6gwf.libmf6, working_directory=sim_mf6gwf.sim_ws)
+        mf6api = modflowapi.ModflowApi(
+            sim_mf6gwf.libmf6, working_directory=sim_mf6gwf.sim_ws
+        )
         mf6api.initialize()
-        
+
         input_var_names = mf6api.get_input_var_names()
-        nxyz = nlay*nrow*ncol
+        nxyz = nlay * nrow * ncol
         current_time = mf6api.get_current_time()
-        end_time     = mf6api.get_end_time()
-        trans_concs = np.full(nxyz*len(phreeqcrm.solutes), 0.0)
+        end_time = mf6api.get_end_time()
+        trans_concs = np.full(nxyz * len(phreeqcrm.solutes), 0.0)
         while current_time < end_time:
             mf6api.update()
             for i, solute in enumerate(phreeqcrm.solutes):
                 conc = mf6api.get_value_ptr(f"TRANS.{solute.upper()}/X")
-                #status = phreeqcrm.SetIthConcentration(i, conc / concentration_factor)
-                trans_concs[i*nxyz:(i+1)*nxyz] = conc / concentration_factor
+                # status = phreeqcrm.SetIthConcentration(i, conc / concentration_factor)
+                trans_concs[i * nxyz : (i + 1) * nxyz] = conc / concentration_factor
             phreeqcrm.set_value("Concentrations", trans_concs)
             phreeqcrm.update()
             for i, solute in enumerate(phreeqcrm.solutes):
-                #conc = mf6api.get_value_ptr(f"TRANS.{solute.upper()}/X") 
-                #conc = phreeqcrm.GetIthConcentration(i)
-                conc = concs[i*nxyz:(i+1)*nxyz] * concentration_factor
-                #conc = conc * concentration_factor
+                # conc = mf6api.get_value_ptr(f"TRANS.{solute.upper()}/X")
+                # conc = phreeqcrm.GetIthConcentration(i)
+                conc = concs[i * nxyz : (i + 1) * nxyz] * concentration_factor
+                # conc = conc * concentration_factor
                 mf6api.set_value(f"TRANS.{solute.upper()}/X", conc)
             current_time = mf6api.get_current_time()
         mf6api.finalize()
@@ -593,7 +612,7 @@ def get_selected_output(phreeqc):
 
 
 def run_ex11(sim_folder):
-    #sim_ws = os.path.abspath(os.path.join(workspace, sim_folder, "phreeqcrm"))
+    # sim_ws = os.path.abspath(os.path.join(workspace, sim_folder, "phreeqcrm"))
     sim_ws = workspace / sim_folder / "phreeqcrm"
     with change_directory(sim_ws):
         ip = phreeqc_mod.IPhreeqc()
@@ -603,35 +622,34 @@ def run_ex11(sim_folder):
         conc = get_selected_output(ip)
     return conc
 
+
 # Function to plot the model results
 
 
-def plot_results_ct(
-    sims, idx, solutes_idx, solutes, conc, longitudinal_dispersivity
-):
-    #if config.plotModel:
+def plot_results_ct(sims, idx, solutes_idx, solutes, conc, longitudinal_dispersivity):
+    # if config.plotModel:
     if plot:
-    # with styles.USGSMap():
+        # with styles.USGSMap():
         _, sim_mf6gwf = sims
-        #sim_ws = sim_mf6gwf.simulation_data.mfpath.get_sim_path()
-        
-        mf6gwt_ra = sim_mf6gwf.get_model(f"trans.{solutes[solutes_idx]}").obs.output.obs().data
-        #fig, axs = plt.subplots(1, 1, figsize=figure_size, dpi=300, tight_layout=True)
+        # sim_ws = sim_mf6gwf.simulation_data.mfpath.get_sim_path()
+
+        mf6gwt_ra = (
+            sim_mf6gwf.get_model(f"trans.{solutes[solutes_idx]}").obs.output.obs().data
+        )
+        # fig, axs = plt.subplots(1, 1, figsize=figure_size, dpi=300, tight_layout=True)
         fig, axs = plt.subplots(1, 1, tight_layout=True)
         iskip = 4
-        
+
         obsnames = ["CELL39"]
         simtimes = mf6gwt_ra["totim"]
-        
-        dispersion_coefficient = (
-            longitudinal_dispersivity * specific_discharge
-        )
-        colors=["blue", "red", "green"]
-        markers=["o","x","+"]
+
+        dispersion_coefficient = longitudinal_dispersivity * specific_discharge
+        colors = ["blue", "red", "green"]
+        markers = ["o", "x", "+"]
         # Modflow
         i = 0
         axs.plot(
-            simtimes[::iskip]/28800.,
+            simtimes[::iskip] / 28800.0,
             mf6gwt_ra[obsnames[i]][::iskip],
             marker=markers[i],
             ls="none",
@@ -646,14 +664,14 @@ def plot_results_ct(
         axs.plot(
             conc["PV"],
             var,
-            #var[::iskip],
+            # var[::iskip],
             marker=markers[i],
             ls="none",
             mec=colors[i],
             mfc="none",
             markersize="4",
             label="Phreeqc",
-        )  
+        )
         i = 2
         # add analytical solution if solute is Cl
         if solutes[solutes_idx] == "Cl":
@@ -661,7 +679,7 @@ def plot_results_ct(
             axs.plot(
                 conc["PV"],
                 var,
-                #var[::iskip],
+                # var[::iskip],
                 marker=markers[i],
                 ls="none",
                 mec=colors[i],
@@ -682,6 +700,7 @@ def plot_results_ct(
             fpth = figs_path / f"{sim_name}-{solutes[solutes_idx]}.png"
             fig.savefig(fpth, dpi=600)
 
+
 # Function that wraps all of the steps for each scenario
 #
 # 1. build_model,
@@ -689,6 +708,7 @@ def plot_results_ct(
 # 3. run_model, and
 # 4. plot_results.
 #
+
 
 # @todo get rid of idx/parameters?
 def scenario(idx, silent=True):
@@ -698,17 +718,16 @@ def scenario(idx, silent=True):
     sims = build_model(key, **parameter_dict)
     write_model(sims, silent=silent)
     success = run_model(sims, silent=silent)
-    assert(success)
-    
+    assert success
+
     if success:
         phreeqcrm, sim_mf6gwf = sims
         solutes = phreeqcrm.solutes
 
-        conc =  run_ex11(sim_name)
+        conc = run_ex11(sim_name)
         for sidx, solute in enumerate(solutes):
             if sidx > 2:
                 plot_results_ct(sims, idx, sidx, solutes, conc, **parameter_dict)
-    
 
 
 def test_01():
