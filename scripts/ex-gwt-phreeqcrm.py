@@ -4,12 +4,12 @@
 #
 #
 
-
 # ### One-Dimensional Steady Flow with Transport Problem Setup
 
 # Imports
 
 # +
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -23,31 +23,38 @@ import pooch
 from flopy.plot.styles import styles
 from modflow_devtools.misc import get_env, timed
 
-
-import os
-import sys
-
-
 import modflowapi
 from modflowapi import Callbacks
 
-import phreeqcrm
-import phreeqpy.iphreeqc.phreeqc_dll as phreeqc_mod
-import shutil
+import warnings
+with warnings.catch_warnings():
+    # temporary hack until swig 4.4 is released
+    # see https://github.com/swig/swig/milestone/10
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-sim_name = "ex-gwt-phreeqc"
+    # pip install phreeqcrm / conda install conda-forge::phreeqcrm
+    import phreeqcrm
+
+# pip install phreeqpy / conda install conda-forge::phreeqpy
+import phreeqpy.iphreeqc.phreeqc_dll as phreeqc_mod
+
+# +
+# Example name and workspace paths. If this example is running
+# in the git repository, use the folder structure described in
+# DEVELOPER.md. Otherwise just use the current working directory.
+sim_name = "ex-gwt-phreeqcrm"
 try:
     root = Path(git.Repo(".", search_parent_directories=True).working_dir)
 except:
     root = None
-workspace = root / "examples" if root else Path.cwd()
-figs_path = root / "figures" if root else Path.cwd()
+workspace = root / "examples"        if root else Path.cwd()
+figs_path = root / "figures"         if root else Path.cwd()
 data_path = root / "data" / sim_name if root else Path.cwd()
 
 # Settings from environment variables
-write = get_env("WRITE", True)
-run = get_env("RUN", True)
-plot = get_env("PLOT", True)
+write     = get_env("WRITE", True)
+run       = get_env("RUN", True)
+plot      = get_env("PLOT", True)
 plot_show = get_env("PLOT_SHOW", True)
 plot_save = get_env("PLOT_SAVE", True)
 # -
@@ -68,7 +75,8 @@ figure_size = (5, 3)
 # Base simulation and model name and workspace
 
 #ws = config.base_ws
-ws = root
+##ws = root
+ws = workspace
 ## example_name = "moc"
 
 from contextlib import contextmanager
@@ -93,7 +101,7 @@ def change_directory(new_dir):
 # Scenario parameters - make sure there is at least one blank line before next item
 
 parameters = {
-    "ex-gwt-phreeqc": {
+    "ex-gwt-phreeqcrm": {
         "longitudinal_dispersivity": 0.002,
     },
 }
@@ -131,31 +139,18 @@ concentration_factor = 1000.  # Scale factor ($millmoles/mole$)
 # Create yaml for phreeqcrm initialize()
 
 def setup_phreeqcrm(sim_folder):
-    
-    ##os.chdir(sys.path[0])
-    #notebook_path = os.path.abspath("ex11-bmi-mmols-single_dlp.ipynb")
-
-    #notebook_directory = os.path.dirname(notebook_path)
-    #assert(os.getcwd() == notebook_directory)
-
-    #assert(sim_folder == "ex11-bmi-mmols-single_dlp")
-    
-    # get abspath before change_directory
-    #sim_ws = os.path.abspath(os.path.join(ws, sim_folder, "phreeqcrm"))
-    #sim_ws = os.path.abspath(os.path.join(workspace, sim_folder, "phreeqcrm"))
+    # @todo update workspace var
     sim_ws = workspace / sim_folder / "phreeqcrm"
 
     with change_directory(sim_ws):
         
         # copy phreeqc.dat to sim_ws
-        #source_file = os.path.join(notebook_directory, 'phreeqc.dat')
-        #source_file = os.path.join(data_path, 'phreeqc.dat')
         source_file = data_path / 'phreeqc.dat'
+        print(f"source_file={source_file}")
+        print(f"sim_ws={sim_ws}")
         shutil.copy(source_file, sim_ws)
 
         # copy advect.pqi to sim_ws
-        #source_file = os.path.join(notebook_directory, 'advect.pqi')
-        #source_file = os.path.join(data_path, 'advect.pqi')
         source_file = data_path / 'advect.pqi'
         shutil.copy(source_file, sim_ws)
     
@@ -238,16 +233,14 @@ def setup_phreeqcrm(sim_folder):
 
 
 def build_phreeqcrm(sim_folder):
-    print(f"sim_folder={sim_folder}")
-
+    
+    ##print(f"sim_folder={sim_folder}")
     yaml = setup_phreeqcrm(sim_folder)
     
     rm = None
     try:
-        # get abspath before change_directory
-        # sim_ws = os.path.abspath(os.path.join(workspace, sim_folder, "phreeqcrm"))
+         
         sim_ws = workspace / sim_folder / "phreeqcrm"
-        print(f"sim_ws={sim_ws}")
         
         rm = phreeqcrm.BMIPhreeqcRM()
         with change_directory(sim_ws):
@@ -339,13 +332,19 @@ def build_mf6gwfgwt(sim_folder, solutes, influent_concentration, initial_solutio
         budget_filerecord=budget_filerecord,
         saverecord=[("HEAD", "ALL"), ("BUDGET", "ALL")],
     )
-    
+
     # set vars for use in run_model
     sim.sim_ws = sim_ws
-    
-    # @todo update for other OSs
-    sim.libmf6 = Path(os.path.join(os.environ["USERPROFILE"], "AppData\\Local\\flopy\\bin", "libmf6"))
-    
+
+    # this assumes that the modflowapi shared library(dll,dylib,so)
+    # is in the same directory as the mf6 executable
+    soext = ".so"
+    if sys.platform.lower() == "win32":
+        soext = ".dll"
+    if sys.platform.lower() == "darwin":
+        soext = ".dylib"
+    sim.libmf6 = Path(shutil.which("mf6")).parent / f"libmf6{soext}"
+
     # build transports
     for i, solute in enumerate(solutes):
         name = f"trans.{solute}"
@@ -605,8 +604,8 @@ def plot_results_ct(
         fig, axs = plt.subplots(1, 1, figsize=figure_size, dpi=300, tight_layout=True)
         # fig, axs = plt.subplots(5, 1, figsize=figure_size, dpi=300, tight_layout=True)
         # print(f"len(axs)={len(axs)}")
-        #iskip = 4
-        iskip = 16
+        iskip = 4
+        #iskip = 16
         
         obsnames = ["CELL39"]
         simtimes = mf6gwt_ra["totim"]
@@ -643,6 +642,7 @@ def plot_results_ct(
             label="Phreeqc",
         )  
         i = 2
+        # add analytical solution if solute is Cl
         if solutes[solutes_idx] == "Cl":
             var = np.array(conc["Cl_analytical"])
             axs.plot(
@@ -663,7 +663,7 @@ def plot_results_ct(
         # save figure
         if plot_save:
             figs_path.mkdir(exist_ok=True, parents=True)
-            fpth = figs_path / f"{sim_name}.png"
+            fpth = figs_path / f"{sim_name}-{solutes[solutes_idx]}.png"
             fig.savefig(fpth, dpi=600)
 
 # Function that wraps all of the steps for each scenario
@@ -674,7 +674,7 @@ def plot_results_ct(
 # 4. plot_results.
 #
 
-
+# @todo get rid of idx/parameters?
 def scenario(idx, silent=True):
     key = list(parameters.keys())[idx]
     parameter_dict = parameters[key]
