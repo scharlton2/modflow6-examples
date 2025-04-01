@@ -142,6 +142,24 @@ def setup_phreeqcrm(sim_folder):
     # @todo update workspace var
     sim_ws = workspace / sim_folder / "phreeqcrm"
 
+    # get database
+    fname = "phreeqc.dat"
+    fname = pooch.retrieve(
+        url=f"https://github.com/scharlton2/modflow6-examples/raw/refs/heads/phreeqcrm-example/data/{sim_name}/{fname}",
+        fname=fname,
+        path=data_path,
+        known_hash="c0252be127cc8843fddbd41a5dcda5bb3e4ad3df8fce06fdbc1a899bbe6c7c55"
+    )
+
+    # get input file
+    fname = "advect.pqi"
+    fname = pooch.retrieve(
+        url=f"https://github.com/scharlton2/modflow6-examples/raw/refs/heads/phreeqcrm-example/data/{sim_name}/{fname}",
+        fname=fname,
+        path=data_path,
+        known_hash="18da8325ca8ad0e13448e889a55652827a36057899d9167ffa020a1d9afcebe6"
+    )
+
     with change_directory(sim_ws):
         
         # copy phreeqc.dat to sim_ws
@@ -597,15 +615,14 @@ def plot_results_ct(
 ):
     #if config.plotModel:
     if plot:
+    # with styles.USGSMap():
         _, sim_mf6gwf = sims
         #sim_ws = sim_mf6gwf.simulation_data.mfpath.get_sim_path()
         
         mf6gwt_ra = sim_mf6gwf.get_model(f"trans.{solutes[solutes_idx]}").obs.output.obs().data
-        fig, axs = plt.subplots(1, 1, figsize=figure_size, dpi=300, tight_layout=True)
-        # fig, axs = plt.subplots(5, 1, figsize=figure_size, dpi=300, tight_layout=True)
-        # print(f"len(axs)={len(axs)}")
+        #fig, axs = plt.subplots(1, 1, figsize=figure_size, dpi=300, tight_layout=True)
+        fig, axs = plt.subplots(1, 1, tight_layout=True)
         iskip = 4
-        #iskip = 16
         
         obsnames = ["CELL39"]
         simtimes = mf6gwt_ra["totim"]
@@ -659,6 +676,9 @@ def plot_results_ct(
         axs.set_xlabel("Pore volumes")
         axs.set_ylabel(f"{solutes[solutes_idx]} Concentration (mmol/kgw)")
         axs.legend()
+
+        if plot_show:
+            plt.show()
 
         # save figure
         if plot_save:
