@@ -12,6 +12,8 @@
 import os
 import shutil
 import sys
+import warnings
+from contextlib import contextmanager
 from pathlib import Path
 
 import flopy
@@ -20,13 +22,8 @@ import matplotlib.pyplot as plt
 import modflowapi
 import numpy as np
 import pooch
-from flopy.plot.styles import styles
 from modflow_devtools.misc import get_env, timed
 
-import modflowapi
-from modflowapi import Callbacks
-
-import warnings
 with warnings.catch_warnings():
     # temporary hack until swig 4.4 is released
     # see https://github.com/swig/swig/milestone/10
@@ -79,7 +76,8 @@ figure_size = (5, 3)
 ws = workspace
 ## example_name = "moc"
 
-from contextlib import contextmanager
+
+
 @contextmanager
 def change_directory(new_dir):
     original_dir = os.getcwd()  # Get the current working directory
@@ -164,8 +162,6 @@ def setup_phreeqcrm(sim_folder):
         
         # copy phreeqc.dat to sim_ws
         source_file = data_path / 'phreeqc.dat'
-        print(f"source_file={source_file}")
-        print(f"sim_ws={sim_ws}")
         shutil.copy(source_file, sim_ws)
 
         # copy advect.pqi to sim_ws
