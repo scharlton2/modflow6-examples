@@ -1,3 +1,5 @@
+phreeqcrm
+phreeqpy
 git+https://github.com/modflowpy/flopy.git@develop
 git+https://github.com/MODFLOW-ORG/modflowapi.git@develop
 # git+https://github.com/MODFLOW-ORG/modflow-devtools.git@develop
