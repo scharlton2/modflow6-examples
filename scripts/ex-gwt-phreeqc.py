@@ -387,48 +387,10 @@ def build_mf6gwfgwt(sim_folder, solutes, influent_concentration, initial_solutio
         flopy.mf6.ModflowGwtssm(gwt, sources=sourcerecarray)
         obs_data = {
             f"{solute}.obs.csv": [
-                ("CELL00", "CONCENTRATION", (0, 0, 0)),
-                ("CELL01", "CONCENTRATION", (0, 0, 1)),
-                ("CELL02", "CONCENTRATION", (0, 0, 2)),
-                ("CELL03", "CONCENTRATION", (0, 0, 3)),
-                ("CELL04", "CONCENTRATION", (0, 0, 4)),
-                ("CELL05", "CONCENTRATION", (0, 0, 5)),
-                ("CELL06", "CONCENTRATION", (0, 0, 6)),
-                ("CELL07", "CONCENTRATION", (0, 0, 7)),
-                ("CELL08", "CONCENTRATION", (0, 0, 8)),
-                ("CELL09", "CONCENTRATION", (0, 0, 9)),
-                ("CELL10", "CONCENTRATION", (0, 0, 10)),
-                ("CELL11", "CONCENTRATION", (0, 0, 11)),
-                ("CELL12", "CONCENTRATION", (0, 0, 12)),
-                ("CELL13", "CONCENTRATION", (0, 0, 13)),
-                ("CELL14", "CONCENTRATION", (0, 0, 14)),
-                ("CELL15", "CONCENTRATION", (0, 0, 15)),
-                ("CELL16", "CONCENTRATION", (0, 0, 16)),
-                ("CELL17", "CONCENTRATION", (0, 0, 17)),
-                ("CELL18", "CONCENTRATION", (0, 0, 18)),
-                ("CELL19", "CONCENTRATION", (0, 0, 19)),
-                ("CELL20", "CONCENTRATION", (0, 0, 20)),
-                ("CELL21", "CONCENTRATION", (0, 0, 21)),
-                ("CELL22", "CONCENTRATION", (0, 0, 22)),
-                ("CELL23", "CONCENTRATION", (0, 0, 23)),
-                ("CELL24", "CONCENTRATION", (0, 0, 24)),
-                ("CELL25", "CONCENTRATION", (0, 0, 25)),
-                ("CELL26", "CONCENTRATION", (0, 0, 26)),
-                ("CELL27", "CONCENTRATION", (0, 0, 27)),
-                ("CELL28", "CONCENTRATION", (0, 0, 28)),
-                ("CELL29", "CONCENTRATION", (0, 0, 29)),
-                ("CELL30", "CONCENTRATION", (0, 0, 30)),
-                ("CELL31", "CONCENTRATION", (0, 0, 31)),
-                ("CELL32", "CONCENTRATION", (0, 0, 32)),
-                ("CELL33", "CONCENTRATION", (0, 0, 33)),
-                ("CELL34", "CONCENTRATION", (0, 0, 34)),
-                ("CELL35", "CONCENTRATION", (0, 0, 35)),
-                ("CELL36", "CONCENTRATION", (0, 0, 36)),
-                ("CELL37", "CONCENTRATION", (0, 0, 37)),
-                ("CELL38", "CONCENTRATION", (0, 0, 38)),
-                ("CELL39", "CONCENTRATION", (0, 0, 39)),
-            ],
+                (f"CELL{i:02d}", "CONCENTRATION", (0, 0, i)) for i in range(40)
+            ]
         }
+
         obs_package = flopy.mf6.ModflowUtlobs(
             gwt, digits=10, print_input=True, continuous=obs_data
         )
@@ -643,7 +605,8 @@ def plot_results_ct(
         fig, axs = plt.subplots(1, 1, figsize=figure_size, dpi=300, tight_layout=True)
         # fig, axs = plt.subplots(5, 1, figsize=figure_size, dpi=300, tight_layout=True)
         # print(f"len(axs)={len(axs)}")
-        iskip = 4
+        #iskip = 4
+        iskip = 16
         
         obsnames = ["CELL39"]
         simtimes = mf6gwt_ra["totim"]
@@ -671,6 +634,7 @@ def plot_results_ct(
         axs.plot(
             conc["PV"],
             var,
+            #var[::iskip],
             marker=markers[i],
             ls="none",
             mec=colors[i],
@@ -684,13 +648,14 @@ def plot_results_ct(
             axs.plot(
                 conc["PV"],
                 var,
+                #var[::iskip],
                 marker=markers[i],
                 ls="none",
                 mec=colors[i],
                 mfc="none",
                 markersize="4",
                 label="Analytical",
-            )              
+            )
         axs.set_xlabel("Pore volumes")
         axs.set_ylabel(f"{solutes[solutes_idx]} Concentration (mmol/kgw)")
         axs.legend()
