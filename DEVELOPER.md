@@ -39,18 +39,13 @@ To develop the examples one must first:
 
 ### Create a Python environment
 
-Several Python packages are required to run the example scripts. These are listed in `etc/requirements.pip.txt` and `etc/requirements.usgs.txt`. Once a Python environment has been created, e.g. with `venv` or Conda, dependencies can be installed with:
-
-```shell
-pip install -r etc/requirements.pip.txt
-pip install -r etc/requirements.usgs.txt
-```
+Several Python packages are required to run the example scripts. A Conda environment is provided in `<project root/environment.yml`.
 
 ### Install MODFLOW programs
 
 Besides MODFLOW 6, the examples use a number of MODFLOW-related programs, discovered on the system `PATH`.
 
-With FloPy installed in the active Python environment, these can all be installed with:
+After activating the Conda environment, these can all be installed with:
 
 ```shell
 get-modflow :
@@ -253,12 +248,6 @@ This will
 * create model workspaces in `examples/`, write input files, and run models
 * create parameter tables for example descriptions in `tables/`
 * create plots and figures from model outputs in `figures/`
-
-Next, make sure RTD build dependencies are installed:
-
-```shell
-pip install -r .doc/requirements.rtd.txt
-```
 
 Next, build LaTeX and Markdown files:
 
