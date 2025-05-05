@@ -12,8 +12,7 @@
 # Import dependencies, read settings from environment variables, and define model parameters.
 
 # +
-import os
-import pathlib as pl
+from pathlib import Path
 
 import flopy
 import git
@@ -30,12 +29,12 @@ from shapely.geometry import Polygon
 # the README. Otherwise just use the current working directory.
 sim_name = "ex-gwf-advtidal"
 try:
-    root = pl.Path(git.Repo(".", search_parent_directories=True).working_dir)
+    root = Path(git.Repo(".", search_parent_directories=True).working_dir)
 except:
     root = None
-workspace = root / "examples" if root else pl.Path.cwd()
-figs_path = root / "figures" if root else pl.Path.cwd()
-data_path = root / "data" / sim_name if root else pl.Path.cwd()
+workspace = root / "examples" if root else Path.cwd()
+figs_path = root / "figures" if root else Path.cwd()
+data_path = root / "data" / sim_name if root else Path.cwd()
 
 # Settings from environment variables
 write = get_env("WRITE", True)
@@ -124,7 +123,7 @@ def get_timeseries(fname, names, interpolation, filename=None):
 
 
 def build_models():
-    sim_ws = os.path.join(workspace, sim_name)
+    sim_ws = workspace / sim_name
     sim = flopy.mf6.MFSimulation(
         sim_name=sim_name,
         sim_ws=sim_ws,
@@ -177,7 +176,7 @@ def build_models():
     ghb_spd = {0: ghb_spd}
     fname = "tides.csv"
     fname = pooch.retrieve(
-        url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+        url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
         fname=fname,
         path=data_path,
         known_hash="md5:425337a0bf24fa72c9e40f4e3d9f698a",
@@ -219,7 +218,7 @@ def build_models():
     ]
     fname = "wellrates.csv"
     fpath = pooch.retrieve(
-        url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+        url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
         fname=fname,
         path=data_path,
         known_hash="md5:6ca7366be279d679b14e8338a195422f",
@@ -253,7 +252,7 @@ def build_models():
     riv_spd = list(zip(rivlay, rivrow, rivcol, rivstg, rivcnd, rivrbt, rivbnd))
     fname = "riverstage.csv"
     fpath = pooch.retrieve(
-        url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+        url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
         fname=fname,
         path=data_path,
         known_hash="md5:83f8b526ec6e6978b1d9dbd6fde231ef",
@@ -291,7 +290,7 @@ def build_models():
             )
         fname = f"recharge{ipak + 1}.csv"
         fpath = pooch.retrieve(
-            url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+            url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
             fname=fname,
             path=data_path,
             known_hash=f"md5:{hashes[ipak]}",

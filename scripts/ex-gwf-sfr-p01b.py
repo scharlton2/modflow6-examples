@@ -10,8 +10,7 @@
 # Import dependencies, define the example name and workspace, and read settings from environment variables.
 
 # +
-import os
-import pathlib as pl
+from pathlib import Path
 
 import flopy
 import git
@@ -28,12 +27,12 @@ from modflow_devtools.misc import get_env, timed
 # the README. Otherwise just use the current working directory.
 sim_name = "ex-gwf-sfr-p01b"
 try:
-    root = pl.Path(git.Repo(".", search_parent_directories=True).working_dir)
+    root = Path(git.Repo(".", search_parent_directories=True).working_dir)
 except:
     root = None
-workspace = root / "examples" if root else pl.Path.cwd()
-figs_path = root / "figures" if root else pl.Path.cwd()
-data_path = root / "data" / sim_name if root else pl.Path.cwd()
+workspace = root / "examples" if root else Path.cwd()
+figs_path = root / "figures" if root else Path.cwd()
+data_path = root / "data" / sim_name if root else Path.cwd()
 
 # Settings from environment variables
 write = get_env("WRITE", True)
@@ -105,7 +104,7 @@ shape3d = (nlay, nrow, ncol)
 # Load the idomain, lake locations, top, bottom, and evapotranspiration surface arrays
 fname = "strt1.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:273db6e876e7cfb4985b0b09c232f7cc",
@@ -115,7 +114,7 @@ strt2 = strt1
 strt = [strt1, strt2]
 fname = "idomain.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:3fb0b80939ff6ccc9dc47d010e002a3c",
@@ -125,7 +124,7 @@ idomain = [idomain1, idomain1]
 lake_map = np.ones(shape3d, dtype=int) * -1
 fname = "lakes.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:c344195438bda85738cab2ce34a16733",
@@ -134,7 +133,7 @@ lake_map[0, :, :] = np.loadtxt(fpath, dtype=int) - 1
 lake_map = np.ma.masked_where(lake_map < 0, lake_map)
 fname = "top1.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:ba3f1422f45388b19dc1ef6b3076fa96",
@@ -142,7 +141,7 @@ fpath = pooch.retrieve(
 top = np.loadtxt(fpath, dtype=float)
 fname = "bot1.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:4343c79bbf3ad039638d2379d335d06e",
@@ -154,7 +153,7 @@ botm = [bot1, bot2]
 # Create hydraulic conductivity and specific yield
 fname = "k11_lay1.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:287160064d1a9bc0bae94b018bf187d7",
@@ -165,7 +164,7 @@ k11 = [k11_lay1, k11_lay2]
 k33 = 0.5e-5
 fname = "sy1.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:80be4a9ba817465cf5c05934f94dd675",
@@ -3748,7 +3747,7 @@ rclose = 1e-6
 
 # +
 def build_models():
-    sim_ws = os.path.join(workspace, sim_name)
+    sim_ws = workspace / sim_name
     sim = flopy.mf6.MFSimulation(sim_name=sim_name, sim_ws=sim_ws, exe_name="mf6")
     flopy.mf6.ModflowTdis(sim, nper=nper, perioddata=tdis_ds, time_units=time_units)
     flopy.mf6.ModflowIms(
@@ -4434,8 +4433,8 @@ def plot_mvr_results(idx, gwf, silent=True):
 
 def plot_uzfcolumn_results(idx, gwf, silent=True):
     with styles.USGSPlot():
-        sim_ws = os.path.join(workspace, sim_name)
-        fname = os.path.join(sim_ws, "obs_uzf_column.csv")
+        sim_ws = workspace / sim_name
+        fname = sim_ws / "obs_uzf_column.csv"
         uzf_dat = pd.read_csv(fname, header=0)
         uzf_dat["time_days"] = uzf_dat["time"] / 86400
         x = uzf_dat["time_days"]

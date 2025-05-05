@@ -11,8 +11,7 @@
 
 # +
 import datetime
-import os
-import pathlib as pl
+from pathlib import Path
 
 import flopy
 import git
@@ -28,12 +27,12 @@ from modflow_devtools.misc import get_env, timed
 # the README. Otherwise just use the current working directory.
 sim_name = "ex-gwf-csub-p01"
 try:
-    root = pl.Path(git.Repo(".", search_parent_directories=True).working_dir)
+    root = Path(git.Repo(".", search_parent_directories=True).working_dir)
 except:
     root = None
-workspace = root / "examples" if root else pl.Path.cwd()
-figs_path = root / "figures" if root else pl.Path.cwd()
-data_path = root / "data" / sim_name if root else pl.Path.cwd()
+workspace = root / "examples" if root else Path.cwd()
+figs_path = root / "figures" if root else Path.cwd()
+data_path = root / "data" / sim_name if root else Path.cwd()
 
 # Settings from environment variables
 write = get_env("WRITE", True)
@@ -88,7 +87,7 @@ locw201 = 11
 # Load the aquifer load time series
 fname = "train_load_193704231304.csv"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:32dc8e7b7e39876374af43605e264725",
@@ -136,7 +135,7 @@ relax = 1.0
 
 # +
 def build_models():
-    sim_ws = os.path.join(workspace, sim_name)
+    sim_ws = workspace / sim_name
     sim = flopy.mf6.MFSimulation(sim_name=sim_name, sim_ws=sim_ws, exe_name="mf6")
     flopy.mf6.ModflowTdis(sim, nper=nper, perioddata=tdis_ds, time_units=time_units)
     flopy.mf6.ModflowIms(
@@ -312,7 +311,7 @@ def plot_results(sim, silent=True):
         # get the observed head
         fname = "s201_gw_2sec.csv"
         fpath = pooch.retrieve(
-            url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+            url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
             fname=fname,
             path=data_path,
             known_hash="md5:1098bcd3f4fc1bd3b38d3d55152a8fbb",

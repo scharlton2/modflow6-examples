@@ -8,8 +8,7 @@
 # Import dependencies, define the example name and workspace, and read settings from environment variables.
 
 # +
-import os
-import pathlib as pl
+from pathlib import Path
 
 import flopy
 import git
@@ -29,12 +28,12 @@ masked_values = (0, 1e30, -1e30)
 # the README. Otherwise just use the current working directory.
 sim_name = "ex-gwf-lak-p02"
 try:
-    root = pl.Path(git.Repo(".", search_parent_directories=True).working_dir)
+    root = Path(git.Repo(".", search_parent_directories=True).working_dir)
 except:
     root = None
-workspace = root / "examples" if root else pl.Path.cwd()
-figs_path = root / "figures" if root else pl.Path.cwd()
-data_path = root / "data" / sim_name if root else pl.Path.cwd()
+workspace = root / "examples" if root else Path.cwd()
+figs_path = root / "figures" if root else Path.cwd()
+data_path = root / "data" / sim_name if root else Path.cwd()
 
 # Settings from environment variables
 write = get_env("WRITE", True)
@@ -142,7 +141,7 @@ shape3d = (nlay, nrow, ncol)
 # Load the idomain arrays
 fname = "lakes-01.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:a74ded5357aa667b9df793847e5f8f41",
@@ -151,7 +150,7 @@ lake_map = np.ones(shape3d, dtype=int) * -1
 lake_map[0, :, :] = np.loadtxt(fpath, dtype=int) - 1
 fname = "lakes-02.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:7830e5223c958c35be349a3be24a60a3",
@@ -269,7 +268,7 @@ rclose = 1e-6
 
 # +
 def build_models():
-    sim_ws = os.path.join(workspace, sim_name)
+    sim_ws = workspace / sim_name
     sim = flopy.mf6.MFSimulation(sim_name=sim_name, sim_ws=sim_ws, exe_name="mf6")
     flopy.mf6.ModflowTdis(sim, nper=nper, perioddata=tdis_ds, time_units=time_units)
     flopy.mf6.ModflowIms(
@@ -412,7 +411,7 @@ masked_values = (0, 1e30, -1e30)
 
 
 def plot_grid(gwf, silent=True):
-    sim_ws = os.path.join(workspace, sim_name)
+    sim_ws = workspace / sim_name
 
     # create lake array
     ilake = gwf.dis.idomain.array
@@ -448,7 +447,7 @@ def plot_grid(gwf, silent=True):
         [xedges[16], ycenters[22]],
     ]
     parts = [poly0, poly1, poly2]
-    shape_pth = os.path.join(workspace, sim_name, "sfr.shp")
+    shape_pth = workspace / sim_name / "sfr.shp"
     w = shp.Writer(target=shape_pth, shapeType=shp.POLYLINE)
     w.field("no", "C")
     w.line([poly0])

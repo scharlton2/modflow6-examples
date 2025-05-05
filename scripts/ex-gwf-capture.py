@@ -15,10 +15,9 @@
 # Import dependencies, define the example name and workspace, and read settings from environment variables.
 
 # +
-import os
-import pathlib as pl
 import shutil
 import sys
+from pathlib import Path
 
 import flopy
 import git
@@ -35,12 +34,12 @@ from modflow_devtools.misc import get_env, timed
 # the README. Otherwise just use the current working directory.
 sim_name = "ex-gwf-capture"
 try:
-    root = pl.Path(git.Repo(".", search_parent_directories=True).working_dir)
+    root = Path(git.Repo(".", search_parent_directories=True).working_dir)
 except:
     root = None
-workspace = root / "examples" if root else pl.Path.cwd()
-figs_path = root / "figures" if root else pl.Path.cwd()
-data_path = root / "data" / sim_name if root else pl.Path.cwd()
+workspace = root / "examples" if root else Path.cwd()
+figs_path = root / "figures" if root else Path.cwd()
+data_path = root / "data" / sim_name if root else Path.cwd()
 
 # Settings from environment variables
 write = get_env("WRITE", True)
@@ -62,7 +61,7 @@ time_units = "seconds"
 # Load the bottom, hydraulic conductivity, and idomain arrays
 fname = "bottom.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:201758a5b7febb0390b8b52e634be27f",
@@ -70,7 +69,7 @@ fpath = pooch.retrieve(
 bottom = np.loadtxt(fpath)
 fname = "hydraulic_conductivity.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:6c78564ba92e850d7d51d6e957b8a3ff",
@@ -78,7 +77,7 @@ fpath = pooch.retrieve(
 k11 = np.loadtxt(fpath)
 fname = "idomain.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:435d4490adff7a35d1d4928661e45d81",
@@ -156,7 +155,7 @@ for _k, i, j, _h in chd_spd[0]:
 
 # +
 def build_models():
-    sim_ws = os.path.join(workspace, sim_name)
+    sim_ws = workspace / sim_name
     sim = flopy.mf6.MFSimulation(
         sim_name=sim_name,
         sim_ws=sim_ws,
@@ -262,8 +261,8 @@ def run_models():
         soext = ".dll"
     if sys.platform.lower() == "darwin":
         soext = ".dylib"
-    libmf6_path = pl.Path(shutil.which("mf6")).parent / f"libmf6{soext}"
-    sim_ws = os.path.join(workspace, sim_name)
+    libmf6_path = Path(shutil.which("mf6")).parent / f"libmf6{soext}"
+    sim_ws = workspace / sim_name
     mf6 = modflowapi.ModflowApi(libmf6_path, working_directory=sim_ws)
     qbase = capture_fraction_iteration(mf6, cf_q)
 
@@ -288,7 +287,7 @@ def run_models():
             capture[irow, jcol] = (qriv - qbase) / abs(cf_q)
 
     # save the capture fraction array
-    fpth = os.path.join(sim_ws, "capture.npz")
+    fpth = sim_ws / "capture.npz"
     np.savez_compressed(fpth, capture=capture)
 
 
@@ -313,7 +312,7 @@ def plot_results(silent=True):
         verbosity_level = 1
 
     with styles.USGSMap():
-        sim_ws = os.path.join(workspace, sim_name)
+        sim_ws = workspace / sim_name
         sim = flopy.mf6.MFSimulation.load(
             sim_name=sim_name, sim_ws=sim_ws, verbosity_level=verbosity_level
         )
@@ -321,7 +320,7 @@ def plot_results(silent=True):
         wel = gwf.get_package("WEL-1")
 
         # load the capture fraction data
-        fpth = os.path.join(sim_ws, "capture.npz")
+        fpth = sim_ws / "capture.npz"
         capture = np.load(fpth)["capture"]
 
         # plot grid

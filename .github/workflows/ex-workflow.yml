@@ -22,21 +22,20 @@ jobs:
     name: Lint/format example scripts
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash -el {0}
     steps:
       - name: Checkout MODFLOW 6 examples
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup Micromamba
+        uses: mamba-org/setup-micromamba@v2
         with:
-          python-version: 3.9
-
-      - name: Install Python packages
-        working-directory: etc
-        run: |
-          python --version
-          python -m pip install --upgrade pip setuptools wheel
-          pip install -r requirements.pip.txt
+          environment-file: environment.yml
+          cache-downloads: true
+          cache-environment: true
+          init-shell: bash
 
       - name: Lint
         run: ruff check .
@@ -52,6 +51,9 @@ jobs:
     name: Build example models
     runs-on: ubuntu-latest
     needs: lint
+    defaults:
+      run:
+        shell: bash -el {0}
     steps:
       - name: Checkout MODFLOW6 examples
         uses: actions/checkout@v4
@@ -61,21 +63,19 @@ jobs:
       - name: Checkout MODFLOW 6
         uses: actions/checkout@v4
         with:
-          repository: MODFLOW-USGS/modflow6
+          repository: MODFLOW-ORG/modflow6
           path: modflow6
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup Micromamba
+        uses: mamba-org/setup-micromamba@v2
         with:
-          python-version: 3.9
+          environment-file: modflow6-examples/environment.yml
+          cache-downloads: true
+          cache-environment: true
+          init-shell: bash
 
-      - name: Install Python packages
-        working-directory: modflow6-examples/etc
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install -r requirements.pip.txt
-          pip install -r requirements.usgs.txt
-          python -m ipykernel install --name python_kernel --user
+      - name: Create Jupyter kernel
+        run: python -m ipykernel install --name python_kernel --user
 
       - name: Update FloPy classes
         run: python -m flopy.mf6.utils.generate_classes --ref develop --no-backup
@@ -116,10 +116,11 @@ jobs:
     name: Run examples, make docs
     runs-on: ubuntu-latest
     needs: lint
-    strategy:
-      fail-fast: false
-      matrix:
-        python: [3.9, "3.10", "3.11", "3.12"]
+    defaults:
+      run:
+        shell: bash -el {0}
+    env:
+      MPLBACKEND: agg
     steps:
       - name: Checkout MODFLOW 6 examples
         uses: actions/checkout@v4
@@ -129,13 +130,13 @@ jobs:
       - name: Checkout MODFLOW 6
         uses: actions/checkout@v4
         with:
-          repository: MODFLOW-USGS/modflow6
+          repository: MODFLOW-ORG/modflow6
           path: modflow6
 
       - name: Checkout usgslatex
         uses: actions/checkout@v4
         with:
-          repository: MODFLOW-USGS/usgslatex
+          repository: MODFLOW-ORG/usgslatex
           path: usgslatex
 
       - name: Install LaTeX and extra fonts
@@ -147,21 +148,19 @@ jobs:
         working-directory: usgslatex/usgsLaTeX
         run: sudo ./install.sh --all-users
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup Micromamba
+        uses: mamba-org/setup-micromamba@v2
         with:
-          python-version: ${{ matrix.python }}
+          environment-file: modflow6-examples/environment.yml
+          cache-downloads: true
+          cache-environment: true
+          init-shell: bash
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@v3
+        uses: pyvista/setup-headless-display-action@v4
 
-      - name: Install Python packages
-        working-directory: modflow6-examples/etc
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install -r requirements.pip.txt
-          pip install -r requirements.usgs.txt
-          python -m ipykernel install --name python_kernel --user
+      - name: Create Jupyter kernel
+        run: python -m ipykernel install --name python_kernel --user
 
       - name: Update FloPy classes
         run: python -m flopy.mf6.utils.generate_classes --ref develop --no-backup
@@ -186,21 +185,17 @@ jobs:
 
       - name: Run postprocessing
         working-directory: modflow6-examples/scripts
-        if: matrix.python == '3.9'
         run: python process-scripts.py
 
       - name: Build PDF document
         working-directory: modflow6-examples/doc
-        if: matrix.python == '3.9'
         run: ./build-pdf.sh
 
       - name: Move PDF document
         working-directory: modflow6-examples
-        if: matrix.python == '3.9'
         run: mv doc/${{ env.DISTNAME }}.pdf ${{ env.DISTNAME }}.pdf
 
       - name: Upload PDF document
-        if: matrix.python == '3.9'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.DISTNAME}}.pdf
@@ -222,13 +217,13 @@ jobs:
           format: MM/DD/YYYY HH:mm
 
       - name: Download ${{ env.DISTNAME }}.pdf
-        uses: actions/download-artifact@v4.1.7
+        uses: actions/download-artifact@v4.3.0
         with:
           name: ${{ env.DISTNAME }}.pdf
           path: ${{ env.TAG }}
 
       - name: Download ${{ env.DISTNAME }}.zip
-        uses: actions/download-artifact@v4.1.7
+        uses: actions/download-artifact@v4.3.0
         with:
           name: ${{ env.DISTNAME }}.zip
           path: ${{ env.TAG }}
@@ -238,7 +233,7 @@ jobs:
 
       - name: Delete latest release
         if: |
-          github.repository_owner == 'MODFLOW-USGS' &&
+          github.repository_owner == 'MODFLOW-ORG' &&
           github.ref_name == 'master' &&
           github.event_name == 'push'
         env:
@@ -250,7 +245,7 @@ jobs:
 
       - name: Create new release
         if: |
-          github.repository_owner == 'MODFLOW-USGS' &&
+          github.repository_owner == 'MODFLOW-ORG' &&
           github.ref_name == 'master' &&
           github.event_name == 'push'
         uses: ncipollo/release-action@v1
@@ -264,7 +259,7 @@ jobs:
 
       - name: Upload release assets
         if: |
-          github.repository_owner == 'MODFLOW-USGS' &&
+          github.repository_owner == 'MODFLOW-ORG' &&
           github.ref_name == 'master' &&
           github.event_name == 'push'
         uses: svenstaro/upload-release-action@v2

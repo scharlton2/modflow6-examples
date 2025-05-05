@@ -8,8 +8,7 @@
 # Import dependencies, define the example name and workspace, and read settings from environment variables.
 
 # +
-import os
-import pathlib as pl
+from pathlib import Path
 
 import flopy
 import git
@@ -25,12 +24,12 @@ from modflow_devtools.misc import get_env, timed
 # the README. Otherwise just use the current working directory.
 sim_name = "ex-gwf-sagehen"
 try:
-    root = pl.Path(git.Repo(".", search_parent_directories=True).working_dir)
+    root = Path(git.Repo(".", search_parent_directories=True).working_dir)
 except:
     root = None
-workspace = root / "examples" if root else pl.Path.cwd()
-figs_path = root / "figures" if root else pl.Path.cwd()
-data_path = root / "data" / sim_name if root else pl.Path.cwd()
+workspace = root / "examples" if root else Path.cwd()
+figs_path = root / "figures" if root else Path.cwd()
+data_path = root / "data" / sim_name if root else Path.cwd()
 
 # Settings from environment variables
 write = get_env("WRITE", True)
@@ -77,7 +76,7 @@ tsmult = [1.0] * num_ts
 # from mf-nwt .dis file
 fname = "top1.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:a93be6cf74bf376f696fc2fbcc316aea",
@@ -85,7 +84,7 @@ fpath = pooch.retrieve(
 top = np.loadtxt(fpath)
 fname = "bot1.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:6503e01167875bd257479a2941d1d586",
@@ -94,7 +93,7 @@ bot1 = np.loadtxt(fpath)
 # from mf-nwt .bas file
 fname = "ibnd1.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:7b33e2fba54eae694171c94c75e13d2e",
@@ -102,7 +101,7 @@ fpath = pooch.retrieve(
 idomain1 = np.loadtxt(fpath)
 fname = "strt1.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:d49e24ec920472380787fd27c528123f",
@@ -124,7 +123,7 @@ idomain = np.abs(idomain1)
 # from mf-nwt .upw file
 fname = "kh1.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:50c0a5bfd79b1c9d0e0900540c19d6cc",
@@ -132,7 +131,7 @@ fpath = pooch.retrieve(
 k11 = np.loadtxt(fpath)
 fname = "sy1.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:6bc38fd082875633686732f34ba3e18b",
@@ -140,7 +139,7 @@ fpath = pooch.retrieve(
 sy = np.loadtxt(fpath)
 fname = "kv1.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:7b6685bf35f1150bef553f81c2dfb2cb",
@@ -1786,7 +1785,7 @@ for i in np.arange(0, top.shape[0]):
 # Prepping input for UZF package
 fname = "iuzbnd.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:280faee0782e0de5f2046b38ac20c271",
@@ -1794,7 +1793,7 @@ fpath = pooch.retrieve(
 iuzbnd = np.loadtxt(fpath)
 fname = "thts.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:6ebb033605c7e4700ddcf3f2e51ac371",
@@ -1802,7 +1801,7 @@ fpath = pooch.retrieve(
 thts = np.loadtxt(fpath)
 fname = "vks.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:61892e6cff6dae1879112c9eb03a1614",
@@ -1810,7 +1809,7 @@ fpath = pooch.retrieve(
 uzk33 = np.loadtxt(fpath)
 fname = "finf_gradient.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:e5ac0a0b27a66dd9f2eff63a63c6e6fe",
@@ -1819,7 +1818,7 @@ finf_grad = np.loadtxt(fpath)
 # next, load time series of multipliers
 fname = "uzf_ts.dat"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:969ed0391d64804ec8395a578eb08ed1",
@@ -1948,7 +1947,7 @@ maxmvr = 10000  # Something arbitrarily high
 # +
 def build_models(silent=False):
     # Instantiate the MODFLOW 6 simulation
-    sim_ws = os.path.join(workspace, sim_name)
+    sim_ws = workspace / sim_name
     sim = flopy.mf6.MFSimulation(
         sim_name=sim_name,
         version="mf6",

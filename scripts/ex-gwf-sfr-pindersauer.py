@@ -10,8 +10,7 @@
 # Import dependencies, define the example name and workspace, and read settings from environment variables.
 
 # +
-import os
-import pathlib as pl
+from pathlib import Path
 
 import flopy
 import git
@@ -25,12 +24,12 @@ from modflow_devtools.misc import get_env, timed
 # the README. Otherwise just use the current working directory.
 sim_name = "ex-gwf-sfr-pindersauer"
 try:
-    root = pl.Path(git.Repo(".", search_parent_directories=True).working_dir)
+    root = Path(git.Repo(".", search_parent_directories=True).working_dir)
 except:
     root = None
-workspace = root / "examples" if root else pl.Path.cwd()
-figs_path = root / "figures" if root else pl.Path.cwd()
-data_path = root / "data" / sim_name if root else pl.Path.cwd()
+workspace = root / "examples" if root else Path.cwd()
+figs_path = root / "figures" if root else Path.cwd()
+data_path = root / "data" / sim_name if root else Path.cwd()
 
 # Settings from environment variables
 write = get_env("WRITE", True)
@@ -94,7 +93,7 @@ tdis_ds = [(86400.0, nstp, 1.0)]
 # load delr
 fname = "delr.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/develop/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/develop/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:893ce3e7e186fe81d19e3e8c720986c1",
@@ -124,7 +123,7 @@ ts_data = [(t, q) for t, q in zip(times, inflows)]
 # Load the initial conditions (heads and stages)
 fname = "initial_head.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/develop/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/develop/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:928af478596db57c65d3fbe8a0d15996",
@@ -132,7 +131,7 @@ fpath = pooch.retrieve(
 strt = np.loadtxt(fpath, dtype=float)
 fname = "initial_stage_a.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/develop/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/develop/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:4861ff917d741090aac22addd3a4726c",
@@ -143,7 +142,7 @@ parameters["ex-gwf-sfr-pindersauera"]["stage"] = [
 ]
 fname = "initial_stage_b.txt"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/develop/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/develop/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:dc821ef57c471719387ac4e3fc659fa6",
@@ -181,7 +180,7 @@ def analytical_solution(lambdas, x, t):
 
 # +
 def build_models(sim_name, lambda_val, leakance, stage):
-    sim_ws = os.path.join(workspace, sim_name)
+    sim_ws = workspace / sim_name
     name = sim_name.replace("pindersauer", "ps")
     sim = flopy.mf6.MFSimulation(sim_name=name, sim_ws=sim_ws, exe_name="mf6")
     flopy.mf6.ModflowTdis(sim, nper=nper, perioddata=tdis_ds, time_units=time_units)
@@ -363,7 +362,7 @@ def plot_observations(sim_list, silent=True):
 def plot_results(silent=True):
     sim_list = []
     for key in parameters.keys():
-        sim_ws = os.path.join(workspace, key)
+        sim_ws = workspace / key
         sim_name = key.replace("pindersauer", "ps")
         sim_list.append(flopy.mf6.MFSimulation.load(sim_ws=sim_ws))
     plot_observations(sim_list, silent=silent)

@@ -14,8 +14,7 @@
 # Import dependencies, define the example name and workspace, and read settings from environment variables.
 
 # +
-import os
-import pathlib as pl
+from pathlib import Path
 from pprint import pformat
 
 import flopy
@@ -31,13 +30,13 @@ from modflow_devtools.misc import get_env, timed
 # the README. Otherwise just use the current working directory.
 sim_name = "ex-gwt-prudic2004t2"
 try:
-    root = pl.Path(git.Repo(".", search_parent_directories=True).working_dir)
+    root = Path(git.Repo(".", search_parent_directories=True).working_dir)
 except:
     root = None
-workspace = root / "examples" if root else pl.Path.cwd()
-figs_path = root / "figures" if root else pl.Path.cwd()
-data_path = pl.Path(f"../data/{sim_name}")
-data_path = data_path if data_path.is_dir() else pl.Path.cwd()
+workspace = root / "examples" if root else Path.cwd()
+figs_path = root / "figures" if root else Path.cwd()
+data_path = Path(f"../data/{sim_name}")
+data_path = data_path if data_path.is_dir() else Path.cwd()
 
 # Settings from environment variables
 write = get_env("WRITE", True)
@@ -86,7 +85,7 @@ total_time = 9131.0  # Total simulation time ($d$)
 # Load Data Arrays
 fname = "bot1.dat"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:c510defe0eb1ba1fbfab5663ff63cd83",
@@ -96,7 +95,7 @@ botm = [bot0] + [bot0 - (15.0 * k) for k in range(1, nlay)]
 
 fname = "idomain1.dat"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:45d1ca08015e4a34125ccd95a83da0ee",
@@ -106,7 +105,7 @@ idomain = nlay * [idomain0]
 
 fname = "lakibd.dat"
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:18c90af94c34825a206935b7ddace2f9",
@@ -123,7 +122,7 @@ lakibd = np.loadtxt(fpath, dtype=int)
 def get_stream_data():
     fname = "stream.csv"
     fpath = pooch.retrieve(
-        url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+        url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
         fname=fname,
         path=data_path,
         known_hash="md5:1291c8dec5a415866c711ee14bf0b1f8",
@@ -197,7 +196,7 @@ def build_mf6gwf(sim_folder):
     global idomain
     print(f"Building mf6gwf model...{sim_folder}")
     name = "flow"
-    sim_ws = os.path.join(workspace, sim_folder, "mf6gwf")
+    sim_ws = workspace / sim_folder / "mf6gwf"
     sim = flopy.mf6.MFSimulation(sim_name=name, sim_ws=sim_ws, exe_name="mf6")
     tdis_data = [(total_time, 1, 1.0)]
     flopy.mf6.ModflowTdis(
@@ -247,7 +246,7 @@ def build_mf6gwf(sim_folder):
     chdlist = []
     fname = "chd.dat"
     fpath = pooch.retrieve(
-        url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+        url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
         fname=fname,
         path=data_path,
         known_hash="md5:7889521ec9ec9521377d604d9f6d1f74",
@@ -345,7 +344,7 @@ def build_mf6gwf(sim_folder):
 def build_mf6gwt(sim_folder):
     print(f"Building mf6gwt model...{sim_folder}")
     name = "trans"
-    sim_ws = os.path.join(workspace, sim_folder, "mf6gwt")
+    sim_ws = workspace / sim_folder / "mf6gwt"
     sim = flopy.mf6.MFSimulation(sim_name=name, sim_ws=sim_ws, exe_name="mf6")
     tdis_data = ((total_time, 300, 1.0),)
     flopy.mf6.ModflowTdis(
@@ -556,7 +555,7 @@ def plot_gwf_results(sims):
     sim_mf6gwf, _ = sims
     gwf = sim_mf6gwf.flow
     with styles.USGSMap():
-        sim_ws = sim_mf6gwf.simulation_data.mfpath.get_sim_path()
+        sim_ws = Path(sim_mf6gwf.simulation_data.mfpath.get_sim_path())
 
         head = gwf.output.head().get_data()
         stage = gwf.lak.output.stage().get_data().flatten()
@@ -588,8 +587,7 @@ def plot_gwf_results(sims):
         if plot_show:
             plt.show()
         if plot_save:
-            sim_folder = os.path.split(sim_ws)[0]
-            sim_folder = os.path.basename(sim_folder)
+            sim_folder = sim_ws.parent.name
             fname = f"{sim_folder}-head.png"
             fpth = figs_path / fname
             fig.savefig(fpth)
@@ -602,7 +600,7 @@ def plot_gwt_results(sims):
     gwt = sim_mf6gwt.trans
 
     with styles.USGSMap() as fs:
-        sim_ws = sim_mf6gwt.simulation_data.mfpath.get_sim_path()
+        sim_ws = Path(sim_mf6gwt.simulation_data.mfpath.get_sim_path())
 
         conc = gwt.output.concentration().get_data()
         lakconc = gwt.lak.output.concentration().get_data().flatten()
@@ -649,8 +647,7 @@ def plot_gwt_results(sims):
         if plot_show:
             plt.show()
         if plot_save:
-            sim_folder = os.path.split(sim_ws)[0]
-            sim_folder = os.path.basename(sim_folder)
+            sim_folder = sim_ws.parent.name
             fname = f"{sim_folder}-conc.png"
             fpth = figs_path / fname
             fig.savefig(fpth)
@@ -671,7 +668,7 @@ def plot_gwt_results(sims):
 
             fname = "teststrm.sg2"
             fpath = pooch.retrieve(
-                url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+                url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
                 fname=fname,
                 path=data_path,
                 known_hash="md5:4bb5e256ed8b67f1743d547b43a610d0",
@@ -681,7 +678,7 @@ def plot_gwt_results(sims):
 
             fname = "teststrm.sg3"
             fpath = pooch.retrieve(
-                url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+                url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
                 fname=fname,
                 path=data_path,
                 known_hash="md5:a30d8e27d0bbe09dcb9f39d115592ff5",
@@ -691,7 +688,7 @@ def plot_gwt_results(sims):
 
             fname = "teststrm.sg4"
             fpath = pooch.retrieve(
-                url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+                url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
                 fname=fname,
                 path=data_path,
                 known_hash="md5:ec589d7333fe160842945b5895f5160a",
@@ -708,8 +705,7 @@ def plot_gwt_results(sims):
             if plot_show:
                 plt.show()
             if plot_save:
-                sim_folder = os.path.split(sim_ws)[0]
-                sim_folder = os.path.basename(sim_folder)
+                sim_folder = sim_ws.parent.name
                 fname = f"{sim_folder}-cvt.png"
                 fpth = figs_path / fname
                 fig.savefig(fpth)

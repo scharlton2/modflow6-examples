@@ -39,18 +39,13 @@ To develop the examples one must first:
 
 ### Create a Python environment
 
-Several Python packages are required to run the example scripts. These are listed in `etc/requirements.pip.txt` and `etc/requirements.usgs.txt`. Once a Python environment has been created, e.g. with `venv` or Conda, dependencies can be installed with:
-
-```shell
-pip install -r etc/requirements.pip.txt
-pip install -r etc/requirements.usgs.txt
-```
+Several Python packages are required to run the example scripts. A Conda environment is provided in `<project root/environment.yml`.
 
 ### Install MODFLOW programs
 
 Besides MODFLOW 6, the examples use a number of MODFLOW-related programs, discovered on the system `PATH`.
 
-With FloPy installed in the active Python environment, these can all be installed with:
+After activating the Conda environment, these can all be installed with:
 
 ```shell
 get-modflow :
@@ -68,7 +63,7 @@ See the [FloPy documentation](https://flopy.readthedocs.io/en/stable/md/get_modf
 
 ### Update FloPy classes
 
-FloPy and MODFLOW 6 versions must be kept in sync for FloPy to properly generate and consume MF6 input/output files. To update FloPy from some branch of the [MODFLOW 6 repository](https://github.com/MODFLOW-USGS/modflow6), for instance the `develop` branch:
+FloPy and MODFLOW 6 versions must be kept in sync for FloPy to properly generate and consume MF6 input/output files. To update FloPy from some branch of the [MODFLOW 6 repository](https://github.com/MODFLOW-ORG/modflow6), for instance the `develop` branch:
 
 ```shell
 python -m flopy.mf6.utils.generate_classes --ref develop --no-backup
@@ -94,12 +89,12 @@ A snippet like the following, which determines whether the example is running in
 ```python
 sim_name = "ex-gwf-advtidal"
 try:
-    root = pl.Path(git.Repo(".", search_parent_directories=True).working_dir)
+    root = Path(git.Repo(".", search_parent_directories=True).working_dir)
 except:
     root = None
-workspace = root / "examples" if root else pl.Path.cwd()
-figs_path = root / "figures" if root else pl.Path.cwd()
-data_path = root / "data" / sim_name if root else pl.Path.cwd()
+workspace = root / "examples" if root else Path.cwd()
+figs_path = root / "figures" if root else Path.cwd()
+data_path = root / "data" / sim_name if root else Path.cwd()
 ```
 
 **Note:** The build automation expects the simulation name `sim_name` and workspace directory name to match the example name as listed in `doc/body.tex`.
@@ -123,7 +118,7 @@ Provided a file name `fname` and data directory `data_path`, the following snipp
 
 ```python
 fpath = pooch.retrieve(
-    url=f"https://github.com/MODFLOW-USGS/modflow6-examples/raw/develop/data/{sim_name}/{fname}",
+    url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/develop/data/{sim_name}/{fname}",
     fname=fname,
     path=data_path,
     known_hash="md5:<MD5 hash of the file>",
@@ -253,12 +248,6 @@ This will
 * create model workspaces in `examples/`, write input files, and run models
 * create parameter tables for example descriptions in `tables/`
 * create plots and figures from model outputs in `figures/`
-
-Next, make sure RTD build dependencies are installed:
-
-```shell
-pip install -r .doc/requirements.rtd.txt
-```
 
 Next, build LaTeX and Markdown files:
 
