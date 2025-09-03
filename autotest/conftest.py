@@ -1,7 +1,13 @@
+from collections.abc import Callable
 from pathlib import Path
 
+import pandas as pd
 import pytest
+from numpy.typing import NDArray
 
+pytest_plugins = ["modflow_devtools.fixtures", "modflow_devtools.snapshots"]
+
+EXCLUDE = []
 PROJ_ROOT = Path(__file__).parents[1]
 SCRIPTS_PATH = PROJ_ROOT / "scripts"
 TABLES_PATH = PROJ_ROOT / "tables"
@@ -9,7 +15,15 @@ IMAGES_PATH = PROJ_ROOT / "images"
 FIGURES_PATH = PROJ_ROOT / "figures"
 EXAMPLES_PATH = PROJ_ROOT / "examples"
 NOTEBOOKS_PATH = PROJ_ROOT / ".doc" / "_notebooks"
-EXCLUDE = []
+SNAPSHOT_CONFIG: dict[str, dict[str, Callable[[Path], NDArray]]] = {
+    # TODO: support multiple snapshot files. this is a dictionary to leave the door open for that.
+    "ex-gwt-keating": {
+        "mf6prt/track.trk.csv": lambda p: pd.read_csv(p)
+        .drop("name", axis=1)
+        .round(2)
+        .to_records(index=False),
+    },
+}
 
 
 @pytest.fixture(scope="session")
@@ -42,6 +56,17 @@ def plot_save(request, plot) -> bool:
 @pytest.fixture(scope="session")
 def gif(request, plot) -> bool:
     return plot and not request.config.getoption("--no-gif")
+
+
+@pytest.fixture
+def snapshot_config(
+    example_script, array_snapshot
+) -> dict[str, Callable[[Path], NDArray]] | None:
+    example_name = Path(example_script).stem
+    config = SNAPSHOT_CONFIG.get(example_name, {})
+    if config:
+        print(f"Snapshot file for {example_name}: {list(config.keys())[0]}")  # noqa: RUF015
+    return (config, array_snapshot) if any(config) else None
 
 
 def pytest_addoption(parser):
